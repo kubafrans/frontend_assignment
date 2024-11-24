@@ -39,9 +39,9 @@ app.post('/login', async (req, res) => {
   }
 });
 
-app.get('/users', async (req, res) => {
+app.get('/products', async (req, res) => {
   try {
-    const sql = 'Select * from produkcje';
+    const sql = 'Select * from products';
     const result = await db.pool.query(sql);
     res.send(result);
   } catch (error) {

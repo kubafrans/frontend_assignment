@@ -4,7 +4,7 @@ const pool = mariadb.createPool({
   host: 'localhost',
   user: 'root',
   password: 'root',
-  database: 'users',
+  database: 'shop',
   port: 3306,
 });
 
