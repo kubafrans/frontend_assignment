@@ -18,6 +18,9 @@ import Tooltip from '@mui/material/Tooltip';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { visuallyHidden } from '@mui/utils';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Modal from '@mui/material/Modal';
 
 interface Data {
   product_id: number;
@@ -222,6 +225,7 @@ export default function EnhancedTable() {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [rows, setRows] = React.useState<Data[]>([]);
+  const [editRow, setEditRow] = React.useState<Data | null>(null);
 
   React.useEffect(() => {
     fetch('http://localhost:3001/products')
@@ -281,6 +285,55 @@ export default function EnhancedTable() {
   ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  const handleEditClick = (row: Data) => {
+    setEditRow(row);
+  };
+
+  const handleEditChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (editRow) {
+      setEditRow({
+        ...editRow,
+        [event.target.name]: event.target.value,
+      });
+    }
+  };
+
+  const handleEditSubmit = () => {
+    if (editRow) {
+      // Update the row in the state
+      setRows(
+        rows.map((row) =>
+          row.product_id === editRow.product_id ? editRow : row
+        )
+      );
+
+      // Send the updated data to the server
+      console.log(editRow);
+      fetch(`http://localhost:3001/products/${editRow.product_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editRow),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log('Success:', data);
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
+
+      setEditRow(null);
+    }
+  };
+
+  const handleEditCancel = () => {
+    setEditRow(null);
   };
 
   // Avoid a layout jump when reaching the last page with empty rows.
@@ -361,6 +414,11 @@ export default function EnhancedTable() {
                     <TableCell align="right">
                       {row.in_stock}
                     </TableCell>
+                    <TableCell align="right">
+                      <Button onClick={() => handleEditClick(row)}>
+                        Edit
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -386,6 +444,84 @@ export default function EnhancedTable() {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Paper>
+      <Modal
+        open={!!editRow}
+        onClose={handleEditCancel}
+        aria-labelledby="edit-modal-title"
+        aria-describedby="edit-modal-description"
+      >
+        <Box sx={{ ...modalStyle, width: 400 }}>
+          <Typography
+            id="edit-modal-title"
+            variant="h6"
+            component="h2"
+          >
+            Edit Product
+          </Typography>
+          {editRow && (
+            <Box component="form" sx={{ mt: 2 }}>
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Name"
+                name="product_name"
+                value={editRow.product_name}
+                onChange={handleEditChange}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Price"
+                name="product_price"
+                type="number"
+                value={editRow.product_price}
+                onChange={handleEditChange}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="In Stock"
+                name="in_stock"
+                type="number"
+                value={editRow.in_stock}
+                onChange={handleEditChange}
+              />
+              <Box
+                sx={{
+                  mt: 2,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleEditSubmit}
+                >
+                  Save
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={handleEditCancel}
+                >
+                  Cancel
+                </Button>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      </Modal>
     </Box>
   );
 }
+
+const modalStyle = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  bgcolor: 'background.paper',
+  boxShadow: 24,
+  p: 4,
+};

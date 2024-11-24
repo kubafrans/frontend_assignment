@@ -49,6 +49,28 @@ app.get('/products', async (req, res) => {
   }
 });
 
+app.put('/products/:id', async (req, res) => {
+  const { id } = req.params;
+  const { product_name, product_price, in_stock } = req.body;
+  try {
+    const sql =
+      'UPDATE products SET product_name = ?, product_price = ?, in_stock = ? WHERE product_id = ?';
+    const result = await db.pool.query(sql, [
+      product_name,
+      product_price,
+      in_stock,
+      id,
+    ]);
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Product updated successfully' });
+    } else {
+      res.status(404).json({ message: 'Product not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
