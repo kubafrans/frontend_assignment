@@ -81,12 +81,25 @@ app.post('/products', async (req, res) => {
       product_price,
       in_stock,
     ]);
-    res
-      .status(201)
-      .json({
-        message: 'Product added successfully',
-        productId: result.insertId,
-      });
+    res.status(201).json({
+      message: 'Product added successfully',
+      productId: result.insertId,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.delete('/products/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const sql = 'DELETE FROM products WHERE product_id = ?';
+    const result = await db.pool.query(sql, [id]);
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Product deleted successfully' });
+    } else {
+      res.status(404).json({ message: 'Product not found' });
+    }
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });
   }

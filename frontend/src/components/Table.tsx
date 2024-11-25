@@ -314,6 +314,26 @@ export default function EnhancedTable() {
     setNewRow(null);
   };
 
+  const handleRemoveClick = (product_id: number) => {
+    // Remove the row from the state
+    setRows(rows.filter((row) => row.product_id !== product_id));
+
+    // Send the delete request to the server
+    fetch(`http://localhost:3001/products/${product_id}`, {
+      method: 'DELETE',
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        setSnackbarMessage('Product removed successfully');
+        setSnackbarOpen(true);
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        setSnackbarMessage('Error removing product');
+        setSnackbarOpen(true);
+      });
+  };
+
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
   };
@@ -355,7 +375,6 @@ export default function EnhancedTable() {
                 return (
                   <TableRow
                     hover
-                    onClick={() => handleEditClick(row)}
                     role="checkbox"
                     tabIndex={-1}
                     key={row.product_id}
@@ -381,6 +400,13 @@ export default function EnhancedTable() {
                     <TableCell align="right">
                       <Button onClick={() => handleEditClick(row)}>
                         Edit
+                      </Button>
+                      <Button
+                        onClick={() =>
+                          handleRemoveClick(row.product_id)
+                        }
+                      >
+                        Remove
                       </Button>
                     </TableCell>
                   </TableRow>
