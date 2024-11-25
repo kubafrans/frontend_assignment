@@ -12,15 +12,15 @@ import TableSortLabel from '@mui/material/TableSortLabel';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
-import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { visuallyHidden } from '@mui/utils';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Modal from '@mui/material/Modal';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
 interface Data {
   product_id: number;
@@ -64,13 +64,9 @@ interface HeadCell {
 }
 
 interface EnhancedTableProps {
-  numSelected: number;
   onRequestSort: (
     event: React.MouseEvent<unknown>,
     property: keyof Data
-  ) => void;
-  onSelectAllClick: (
-    event: React.ChangeEvent<HTMLInputElement>
   ) => void;
   order: Order;
   orderBy: string;
@@ -78,14 +74,7 @@ interface EnhancedTableProps {
 }
 
 function EnhancedTableHead(props: EnhancedTableProps) {
-  const {
-    onSelectAllClick,
-    order,
-    orderBy,
-    numSelected,
-    rowCount,
-    onRequestSort,
-  } = props;
+  const { order, orderBy, onRequestSort } = props;
   const createSortHandler =
     (property: keyof Data) => (event: React.MouseEvent<unknown>) => {
       onRequestSort(event, property);
@@ -94,17 +83,6 @@ function EnhancedTableHead(props: EnhancedTableProps) {
   return (
     <TableHead>
       <TableRow>
-        <TableCell padding="checkbox">
-          <Checkbox
-            color="primary"
-            indeterminate={numSelected > 0 && numSelected < rowCount}
-            checked={rowCount > 0 && numSelected === rowCount}
-            onChange={onSelectAllClick}
-            inputProps={{
-              'aria-label': 'select all products',
-            }}
-          />
-        </TableCell>
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id}
@@ -134,59 +112,38 @@ function EnhancedTableHead(props: EnhancedTableProps) {
 }
 
 interface EnhancedTableToolbarProps {
-  numSelected: number;
+  onAddClick: () => void;
 }
 
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
-  const { numSelected } = props;
+  const { onAddClick } = props;
   return (
     <Toolbar
-      sx={[
-        {
-          pl: { sm: 2 },
-          pr: { xs: 1, sm: 1 },
-        },
-        numSelected > 0 && {
-          bgcolor: (theme) =>
-            alpha(
-              theme.palette.primary.main,
-              theme.palette.action.activatedOpacity
-            ),
-        },
-      ]}
+      sx={{
+        pl: { sm: 2 },
+        pr: { xs: 1, sm: 1 },
+      }}
     >
-      {numSelected > 0 ? (
-        <Typography
-          sx={{ flex: '1 1 100%' }}
-          color="inherit"
-          variant="subtitle1"
-          component="div"
-        >
-          {numSelected} selected
-        </Typography>
-      ) : (
-        <Typography
-          sx={{ flex: '1 1 100%' }}
-          variant="h6"
-          id="tableTitle"
-          component="div"
-        >
-          Products
-        </Typography>
-      )}
-      {numSelected > 0 ? (
-        <Tooltip title="Delete">
-          <IconButton>
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
-      ) : (
-        <Tooltip title="Filter list">
-          <IconButton>
-            <FilterListIcon />
-          </IconButton>
-        </Tooltip>
-      )}
+      <Typography
+        sx={{ flex: '1 1 100%' }}
+        variant="h6"
+        id="tableTitle"
+        component="div"
+      >
+        Products
+      </Typography>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={onAddClick}
+      >
+        Add Product
+      </Button>
+      <Tooltip title="Filter list">
+        <IconButton>
+          <FilterListIcon />
+        </IconButton>
+      </Tooltip>
     </Toolbar>
   );
 }
@@ -219,13 +176,13 @@ export default function EnhancedTable() {
   const [order, setOrder] = React.useState<Order>('asc');
   const [orderBy, setOrderBy] =
     React.useState<keyof Data>('product_price');
-  const [selected, setSelected] = React.useState<readonly number[]>(
-    []
-  );
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [rows, setRows] = React.useState<Data[]>([]);
   const [editRow, setEditRow] = React.useState<Data | null>(null);
+  const [newRow, setNewRow] = React.useState<Data | null>(null);
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const [snackbarMessage, setSnackbarMessage] = React.useState('');
 
   React.useEffect(() => {
     fetch('http://localhost:3001/products')
@@ -241,39 +198,6 @@ export default function EnhancedTable() {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
-  };
-
-  const handleSelectAllClick = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (event.target.checked) {
-      const newSelected = rows.map((n) => n.product_id);
-      setSelected(newSelected);
-      return;
-    }
-    setSelected([]);
-  };
-
-  const handleClick = (
-    event: React.MouseEvent<unknown>,
-    id: number
-  ) => {
-    const selectedIndex = selected.indexOf(id);
-    let newSelected: readonly number[] = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, id);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1)
-      );
-    }
-    setSelected(newSelected);
   };
 
   const handleChangePage = (event: unknown, newPage: number) => {
@@ -312,7 +236,6 @@ export default function EnhancedTable() {
       );
 
       // Send the updated data to the server
-      console.log(editRow);
       fetch(`http://localhost:3001/products/${editRow.product_id}`, {
         method: 'PUT',
         headers: {
@@ -322,10 +245,13 @@ export default function EnhancedTable() {
       })
         .then((response) => response.json())
         .then((data) => {
-          console.log('Success:', data);
+          setSnackbarMessage('Product updated successfully');
+          setSnackbarOpen(true);
         })
         .catch((error) => {
           console.error('Error:', error);
+          setSnackbarMessage('Error updating product');
+          setSnackbarOpen(true);
         });
 
       setEditRow(null);
@@ -334,6 +260,62 @@ export default function EnhancedTable() {
 
   const handleEditCancel = () => {
     setEditRow(null);
+  };
+
+  const handleAddClick = () => {
+    setNewRow({
+      product_id: rows.length + 1,
+      product_name: '',
+      product_price: 0,
+      in_stock: 0,
+    });
+  };
+
+  const handleNewChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (newRow) {
+      setNewRow({
+        ...newRow,
+        [event.target.name]: event.target.value,
+      });
+    }
+  };
+
+  const handleNewSubmit = () => {
+    if (newRow) {
+      // Add the new row to the state
+      setRows([...rows, newRow]);
+
+      // Send the new data to the server
+      fetch('http://localhost:3001/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newRow),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          setSnackbarMessage('Product added successfully');
+          setSnackbarOpen(true);
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+          setSnackbarMessage('Error adding product');
+          setSnackbarOpen(true);
+        });
+
+      setNewRow(null);
+    }
+  };
+
+  const handleNewCancel = () => {
+    setNewRow(null);
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   // Avoid a layout jump when reaching the last page with empty rows.
@@ -353,7 +335,7 @@ export default function EnhancedTable() {
   return (
     <Box sx={{ width: '100%' }}>
       <Paper sx={{ width: '100%', mb: 2 }}>
-        <EnhancedTableToolbar numSelected={selected.length} />
+        <EnhancedTableToolbar onAddClick={handleAddClick} />
         <TableContainer>
           <Table
             sx={{ minWidth: 750 }}
@@ -361,42 +343,24 @@ export default function EnhancedTable() {
             size="medium"
           >
             <EnhancedTableHead
-              numSelected={selected.length}
               order={order}
               orderBy={orderBy}
-              onSelectAllClick={handleSelectAllClick}
               onRequestSort={handleRequestSort}
               rowCount={rows.length}
             />
             <TableBody>
               {visibleRows.map((row, index) => {
-                const isItemSelected = selected.includes(
-                  row.product_id
-                );
                 const labelId = `enhanced-table-checkbox-${index}`;
 
                 return (
                   <TableRow
                     hover
-                    onClick={(event) =>
-                      handleClick(event, row.product_id)
-                    }
+                    onClick={() => handleEditClick(row)}
                     role="checkbox"
-                    aria-checked={isItemSelected}
                     tabIndex={-1}
                     key={row.product_id}
-                    selected={isItemSelected}
                     sx={{ cursor: 'pointer' }}
                   >
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        color="primary"
-                        checked={isItemSelected}
-                        inputProps={{
-                          'aria-labelledby': labelId,
-                        }}
-                      />
-                    </TableCell>
                     <TableCell
                       component="th"
                       id={labelId}
@@ -512,6 +476,87 @@ export default function EnhancedTable() {
           )}
         </Box>
       </Modal>
+      <Modal
+        open={!!newRow}
+        onClose={handleNewCancel}
+        aria-labelledby="new-modal-title"
+        aria-describedby="new-modal-description"
+      >
+        <Box sx={{ ...modalStyle, width: 400 }}>
+          <Typography
+            id="new-modal-title"
+            variant="h6"
+            component="h2"
+          >
+            Add Product
+          </Typography>
+          {newRow && (
+            <Box component="form" sx={{ mt: 2 }}>
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Name"
+                name="product_name"
+                value={newRow.product_name}
+                onChange={handleNewChange}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Price"
+                name="product_price"
+                type="number"
+                value={newRow.product_price}
+                onChange={handleNewChange}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="In Stock"
+                name="in_stock"
+                type="number"
+                value={newRow.in_stock}
+                onChange={handleNewChange}
+              />
+              <Box
+                sx={{
+                  mt: 2,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleNewSubmit}
+                >
+                  Save
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={handleNewCancel}
+                >
+                  Cancel
+                </Button>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      </Modal>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity="success"
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

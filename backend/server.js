@@ -71,6 +71,27 @@ app.put('/products/:id', async (req, res) => {
   }
 });
 
+app.post('/products', async (req, res) => {
+  const { product_name, product_price, in_stock } = req.body;
+  try {
+    const sql =
+      'INSERT INTO products (product_name, product_price, in_stock) VALUES (?, ?, ?)';
+    const result = await db.pool.query(sql, [
+      product_name,
+      product_price,
+      in_stock,
+    ]);
+    res
+      .status(201)
+      .json({
+        message: 'Product added successfully',
+        productId: result.insertId,
+      });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
