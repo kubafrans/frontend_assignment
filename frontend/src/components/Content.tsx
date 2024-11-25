@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Table from './Table';
 
 const Content: React.FC = () => {
   const navigate = useNavigate();
+  const [selectedOption, setSelectedOption] = useState<
+    'Products' | 'Clothes'
+  >('Products');
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -12,9 +15,16 @@ const Content: React.FC = () => {
 
   return (
     <div>
-      <h1>Welcome to the Content Component</h1>
-      <p>This is where your content will go.</p>
-      <Table />
+      <select
+        value={selectedOption}
+        onChange={(e) =>
+          setSelectedOption(e.target.value as 'Products' | 'Clothes')
+        }
+      >
+        <option value="Products">Products</option>
+        <option value="Clothes">Clothes</option>
+      </select>
+      <Table selectedOption={selectedOption} />
       <button onClick={handleLogout}>Logout</button>
     </div>
   );

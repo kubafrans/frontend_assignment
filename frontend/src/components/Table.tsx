@@ -29,6 +29,10 @@ interface Data {
   in_stock: number;
 }
 
+interface TableProps {
+  selectedOption: 'Products' | 'Clothes';
+}
+
 const headCells: readonly HeadCell[] = [
   {
     id: 'product_id',
@@ -172,7 +176,7 @@ function getComparator<Key extends keyof any>(
     : (a, b) => -descendingComparator(a, b, orderBy);
 }
 
-export default function EnhancedTable() {
+const CustomTable: React.FC<TableProps> = ({ selectedOption }) => {
   const [order, setOrder] = React.useState<Order>('asc');
   const [orderBy, setOrderBy] =
     React.useState<keyof Data>('product_price');
@@ -185,11 +189,13 @@ export default function EnhancedTable() {
   const [snackbarMessage, setSnackbarMessage] = React.useState('');
 
   React.useEffect(() => {
-    fetch('http://localhost:3001/products')
+    const endpoint =
+      selectedOption === 'Products' ? 'products' : 'clothes';
+    fetch(`http://localhost:3001/${endpoint}`)
       .then((response) => response.json())
       .then((data) => setRows(data))
       .catch((error) => console.error('Error fetching data:', error));
-  }, []);
+  }, [selectedOption]);
 
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
@@ -236,21 +242,26 @@ export default function EnhancedTable() {
       );
 
       // Send the updated data to the server
-      fetch(`http://localhost:3001/products/${editRow.product_id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editRow),
-      })
+      const endpoint =
+        selectedOption === 'Products' ? 'products' : 'clothes';
+      fetch(
+        `http://localhost:3001/${endpoint}/${editRow.product_id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(editRow),
+        }
+      )
         .then((response) => response.json())
         .then((data) => {
-          setSnackbarMessage('Product updated successfully');
+          setSnackbarMessage('Item updated successfully');
           setSnackbarOpen(true);
         })
         .catch((error) => {
           console.error('Error:', error);
-          setSnackbarMessage('Error updating product');
+          setSnackbarMessage('Error updating item');
           setSnackbarOpen(true);
         });
 
@@ -288,7 +299,9 @@ export default function EnhancedTable() {
       setRows([...rows, newRow]);
 
       // Send the new data to the server
-      fetch('http://localhost:3001/products', {
+      const endpoint =
+        selectedOption === 'Products' ? 'products' : 'clothes';
+      fetch(`http://localhost:3001/${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -297,12 +310,12 @@ export default function EnhancedTable() {
       })
         .then((response) => response.json())
         .then((data) => {
-          setSnackbarMessage('Product added successfully');
+          setSnackbarMessage('Item added successfully');
           setSnackbarOpen(true);
         })
         .catch((error) => {
           console.error('Error:', error);
-          setSnackbarMessage('Error adding product');
+          setSnackbarMessage('Error adding item');
           setSnackbarOpen(true);
         });
 
@@ -319,17 +332,19 @@ export default function EnhancedTable() {
     setRows(rows.filter((row) => row.product_id !== product_id));
 
     // Send the delete request to the server
-    fetch(`http://localhost:3001/products/${product_id}`, {
+    const endpoint =
+      selectedOption === 'Products' ? 'products' : 'clothes';
+    fetch(`http://localhost:3001/${endpoint}/${product_id}`, {
       method: 'DELETE',
     })
       .then((response) => response.json())
       .then((data) => {
-        setSnackbarMessage('Product removed successfully');
+        setSnackbarMessage('Item removed successfully');
         setSnackbarOpen(true);
       })
       .catch((error) => {
         console.error('Error:', error);
-        setSnackbarMessage('Error removing product');
+        setSnackbarMessage('Error removing item');
         setSnackbarOpen(true);
       });
   };
@@ -446,7 +461,7 @@ export default function EnhancedTable() {
             variant="h6"
             component="h2"
           >
-            Edit Product
+            Edit Item
           </Typography>
           {editRow && (
             <Box component="form" sx={{ mt: 2 }}>
@@ -514,7 +529,7 @@ export default function EnhancedTable() {
             variant="h6"
             component="h2"
           >
-            Add Product
+            Add Item
           </Typography>
           {newRow && (
             <Box component="form" sx={{ mt: 2 }}>
@@ -585,7 +600,7 @@ export default function EnhancedTable() {
       </Snackbar>
     </Box>
   );
-}
+};
 
 const modalStyle = {
   position: 'absolute' as 'absolute',
@@ -596,3 +611,5 @@ const modalStyle = {
   boxShadow: 24,
   p: 4,
 };
+
+export default CustomTable;

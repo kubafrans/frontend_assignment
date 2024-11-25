@@ -49,12 +49,44 @@ app.get('/products', async (req, res) => {
   }
 });
 
+app.get('/clothes', async (req, res) => {
+  try {
+    const sql = 'Select * from clothes';
+    const result = await db.pool.query(sql);
+    res.send(result);
+  } catch (error) {
+    throw error;
+  }
+});
+
 app.put('/products/:id', async (req, res) => {
   const { id } = req.params;
   const { product_name, product_price, in_stock } = req.body;
   try {
     const sql =
       'UPDATE products SET product_name = ?, product_price = ?, in_stock = ? WHERE product_id = ?';
+    const result = await db.pool.query(sql, [
+      product_name,
+      product_price,
+      in_stock,
+      id,
+    ]);
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Product updated successfully' });
+    } else {
+      res.status(404).json({ message: 'Product not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.put('/clothes/:id', async (req, res) => {
+  const { id } = req.params;
+  const { product_name, product_price, in_stock } = req.body;
+  try {
+    const sql =
+      'UPDATE clothes SET product_name = ?, product_price = ?, in_stock = ? WHERE product_id = ?';
     const result = await db.pool.query(sql, [
       product_name,
       product_price,
@@ -90,10 +122,44 @@ app.post('/products', async (req, res) => {
   }
 });
 
+app.post('/clothes', async (req, res) => {
+  const { product_name, product_price, in_stock } = req.body;
+  try {
+    const sql =
+      'INSERT INTO clothes (product_name, product_price, in_stock) VALUES (?, ?, ?)';
+    const result = await db.pool.query(sql, [
+      product_name,
+      product_price,
+      in_stock,
+    ]);
+    res.status(201).json({
+      message: 'Product added successfully',
+      productId: result.insertId,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 app.delete('/products/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const sql = 'DELETE FROM products WHERE product_id = ?';
+    const result = await db.pool.query(sql, [id]);
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Product deleted successfully' });
+    } else {
+      res.status(404).json({ message: 'Product not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.delete('/clothes/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const sql = 'DELETE FROM clothes WHERE product_id = ?';
     const result = await db.pool.query(sql, [id]);
     if (result.affectedRows > 0) {
       res.json({ message: 'Product deleted successfully' });
