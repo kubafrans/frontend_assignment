@@ -13,14 +13,13 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import { visuallyHidden } from '@mui/utils';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Modal from '@mui/material/Modal';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import styled from 'styled-components';
+import { visuallyHidden } from '@mui/utils';
 
 interface Data {
   product_id: number;
@@ -77,6 +76,29 @@ interface EnhancedTableProps {
   rowCount: number;
 }
 
+const StyledTableContainer = styled(TableContainer)`
+  margin-top: 20px;
+`;
+
+const StyledTableCell = styled(TableCell)`
+  font-weight: bold;
+`;
+
+const StyledToolbar = styled(Toolbar)`
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 20px;
+`;
+
+const StyledButton = styled(Button)`
+  background-color: #007bff;
+  color: white;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+`;
+
 function EnhancedTableHead(props: EnhancedTableProps) {
   const { order, orderBy, onRequestSort } = props;
   const createSortHandler =
@@ -88,7 +110,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
     <TableHead>
       <TableRow>
         {headCells.map((headCell) => (
-          <TableCell
+          <StyledTableCell
             key={headCell.id}
             align={headCell.numeric ? 'right' : 'left'}
             padding={headCell.disablePadding ? 'none' : 'normal'}
@@ -108,7 +130,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
                 </Box>
               ) : null}
             </TableSortLabel>
-          </TableCell>
+          </StyledTableCell>
         ))}
       </TableRow>
     </TableHead>
@@ -122,33 +144,14 @@ interface EnhancedTableToolbarProps {
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
   const { onAddClick } = props;
   return (
-    <Toolbar
-      sx={{
-        pl: { sm: 2 },
-        pr: { xs: 1, sm: 1 },
-      }}
-    >
-      <Typography
-        sx={{ flex: '1 1 100%' }}
-        variant="h6"
-        id="tableTitle"
-        component="div"
-      >
-        Products
+    <StyledToolbar>
+      <Typography variant="h6" id="tableTitle" component="div">
+        Table of contents
       </Typography>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={onAddClick}
-      >
+      <StyledButton variant="contained" onClick={onAddClick}>
         Add Product
-      </Button>
-      <Tooltip title="Filter list">
-        <IconButton>
-          <FilterListIcon />
-        </IconButton>
-      </Tooltip>
-    </Toolbar>
+      </StyledButton>
+    </StyledToolbar>
   );
 }
 
@@ -176,7 +179,7 @@ function getComparator<Key extends keyof any>(
     : (a, b) => -descendingComparator(a, b, orderBy);
 }
 
-const CustomTable: React.FC<TableProps> = ({ selectedOption }) => {
+const TableComponent: React.FC<TableProps> = ({ selectedOption }) => {
   const [order, setOrder] = React.useState<Order>('asc');
   const [orderBy, setOrderBy] =
     React.useState<keyof Data>('product_price');
@@ -371,7 +374,7 @@ const CustomTable: React.FC<TableProps> = ({ selectedOption }) => {
     <Box sx={{ width: '100%' }}>
       <Paper sx={{ width: '100%', mb: 2 }}>
         <EnhancedTableToolbar onAddClick={handleAddClick} />
-        <TableContainer>
+        <StyledTableContainer>
           <Table
             sx={{ minWidth: 750 }}
             aria-labelledby="tableTitle"
@@ -438,7 +441,7 @@ const CustomTable: React.FC<TableProps> = ({ selectedOption }) => {
               )}
             </TableBody>
           </Table>
-        </TableContainer>
+        </StyledTableContainer>
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
@@ -612,4 +615,4 @@ const modalStyle = {
   p: 4,
 };
 
-export default CustomTable;
+export default TableComponent;
